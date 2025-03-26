@@ -1,6 +1,6 @@
-from orpheus_cpp import OrpheusCpp
 from scipy.io.wavfile import write
 
+from orpheus_cpp import OrpheusCpp
 
 orpheus = OrpheusCpp()
 

@@ -21,7 +21,9 @@ from fastrtc import (
 )
 from fastrtc.utils import create_message
 from huggingface_hub import InferenceClient
+
 from orpheus_cpp.model import OrpheusCpp
+
 async_client = httpx.AsyncClient()
 
 client = InferenceClient(model="meta-llama/Llama-3.2-3B-Instruct")
@@ -46,6 +48,7 @@ Example: I'm nervous about the interview tomorrow
         msg = msg.replace('"', "")
     return msg
 
+
 model = OrpheusCpp()
 
 
@@ -68,7 +71,9 @@ class OrpheusStream(AsyncStreamHandler):
             all_audio = np.array([], dtype=np.int16)
             started_playback = False
 
-            async for (sample_rate, chunk) in model.stream_tts(msg, options={"voice_id": voice_id}):
+            async for sample_rate, chunk in model.stream_tts(
+                msg, options={"voice_id": voice_id}
+            ):
                 all_audio = np.concatenate([all_audio, chunk.squeeze()])
                 if not started_playback:
                     started_playback = True
