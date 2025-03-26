@@ -68,6 +68,17 @@ async for sample_rate, samples in orpheus.stream_tts(text, options={"voice_id": 
     write("output.wav", sample_rate, samples.squeeze())
 ``` 
 
+### Tips
+
+By default, we wait until 1.5 seconds of audio is generated before yielding the first chunk.
+This is to ensure smooth audio streaming at the cost of a longer time to first audio.
+Depending on your hardware, you can try to reduce the `pre_buffer_size` to get a faster time to first chunk.
+
+```python
+async for sample_rate, samples in orpheus.stream_tts(text, options={"voice_id": "tara", "pre_buffer_size": 0.5}):
+    write("output.wav", sample_rate, samples.squeeze())
+``` 
+
 ## License
 
 `orpheus-cpp` is distributed under the terms of the [MIT](https://spdx.org/licenses/MIT.html) license.
