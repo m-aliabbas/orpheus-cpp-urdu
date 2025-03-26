@@ -15,7 +15,7 @@ You also need to install the `llama-cpp-python` package separately. This is beca
 
 Don't worry, you can just run one of the following commands:
 
-### Linux/Windpes
+### Linux/Windows
 ```console
 pip install llama-cpp-python --extra-index-url https://abetlen.github.io/llama-cpp-python/whl/cpu
 ```
