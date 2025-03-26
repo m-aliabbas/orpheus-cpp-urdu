@@ -27,6 +27,17 @@ pip install llama-cpp-python --extra-index-url https://abetlen.github.io/llama-c
 
 ## Usage
 
+### Async FastRTC Demo
+
+After installing `orpheus-cpp`, install `fastrtc` and run the following command:
+
+```console
+python -m orpheus_cpp
+```
+
+Then go to `http://localhost:7860` and you should see the demo.
+
+### Sync TTS
 ```python
 from orpheus_cpp import OrpheusCpp
 from scipy.io.wavfile import write
@@ -41,29 +52,19 @@ sample_rate, samples = orpheus.tts(text, options={"voice_id": "tara"})
 write("output.wav", sample_rate, samples.squeeze())
 ```
 
-## Streaming Sync
+### Streaming Sync
 
 ```python
 for sample_rate, samples in orpheus.stream_tts_sync(text, options={"voice_id": "tara"}):
     write("output.wav", sample_rate, samples.squeeze())
 ``` 
 
-## Streaming Async
+### Streaming Async
 
 ```python
 async for sample_rate, samples in orpheus.stream_tts(text, options={"voice_id": "tara"}):
     write("output.wav", sample_rate, samples.squeeze())
 ``` 
-
-## Async FastRTC Demo
-
-After installing `orpheus-cpp`, install `fastrtc` and run the following command:
-
-```console
-python -m orpheus_cpp
-```
-
-Then go to `http://localhost:7860` and you should see the demo.
 
 ## License
 
