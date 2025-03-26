@@ -37,6 +37,8 @@ python -m orpheus_cpp
 
 Then go to `http://localhost:7860` and you should see the demo.
 
+<video src="https://github.com/user-attachments/assets/54dfffc9-1981-4d12-b4d1-eb68ab27e5ad" controls style="text-align: center">></video>
+
 ### Sync TTS
 ```python
 from orpheus_cpp import OrpheusCpp
