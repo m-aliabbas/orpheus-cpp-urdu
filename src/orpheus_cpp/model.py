@@ -7,8 +7,6 @@ from typing import (
     Generator,
     Iterator,
     Literal,
-    NotRequired,
-    TypedDict,
     cast,
 )
 
@@ -16,6 +14,7 @@ import numpy as np
 import onnxruntime
 from huggingface_hub import hf_hub_download
 from numpy.typing import NDArray
+from typing_extensions import NotRequired, TypedDict
 
 
 class TTSOptions(TypedDict):
@@ -41,7 +40,7 @@ CUSTOM_TOKEN_PREFIX = "<custom_token_"
 
 
 class OrpheusCpp:
-    def __init__(self, verbose: bool = True):
+    def __init__(self, n_gpu_layers: int = 0, n_threads: int = 0, verbose: bool = True):
         import importlib.util
 
         if importlib.util.find_spec("llama_cpp") is None:
@@ -74,7 +73,18 @@ class OrpheusCpp:
         )
         from llama_cpp import Llama
 
-        self._llm = Llama(model_path=model_file, n_ctx=0, verbose=verbose)
+        if n_gpu_layers == 0:
+            print(
+                "Running model without GPU Acceleration. Please set n_gpu_layers parameters to control the number of layers to offload to GPU."
+            )
+
+        self._llm = Llama(
+            model_path=model_file,
+            n_ctx=0,
+            verbose=verbose,
+            n_gpu_layers=n_gpu_layers,
+            n_threads=n_threads,
+        )
 
         repo_id = "onnx-community/snac_24khz-ONNX"
         snac_model_file = "decoder_model.onnx"
