@@ -6,6 +6,7 @@ if importlib.util.find_spec("fastrtc") is None:
     )
 
 import asyncio
+import json
 import random
 
 import gradio as gr
@@ -26,19 +27,42 @@ from orpheus_cpp.model import OrpheusCpp
 
 async_client = httpx.AsyncClient()
 
-client = InferenceClient(model="meta-llama/Llama-3.2-3B-Instruct")
+client = InferenceClient(
+    model="meta-llama/Llama-4-Maverick-17B-128E-Instruct", provider="sambanova"
+)
 
 
-def generate_message():
-    system_prompt = """You are a creative text generator that generates short sentences from everyday life.
+language_code_to_language = {
+    "en": "English",
+    "fr": "French",
+    "es": "Spanish",
+    "de": "German",
+    "it": "Italian",
+    "zh": "Chinese",
+    "ko": "Korean",
+    "hi": "Hindi",
+}
+
+
+def generate_message(lang: str):
+    system_prompt = """You are a creative text generator that generates short sentences from everyday life across multiple languages.
+Only response with the sentence in the target language. No other text!
 Example: "Hello!  I'm so excited to talk to you! This is going to be fun!"
 Example: I'm nervous about the interview tomorrow
+Example: Hola, ¿cómo estás?
+Example: 안녕하세요, 오늘 기분이 좋아요!
+Example: こんにちは、今日は元気ですか？
+Example: नमस्ते, आप कैसे हैं?
+Example: "Ciao, come stai?"
 """
 
     response = client.chat.completions.create(
         messages=[
             {"role": "system", "content": system_prompt},
-            {"role": "user", "content": "Give me a short sentence please."},
+            {
+                "role": "user",
+                "content": f"Give me a short sentence please for this language code: {language_code_to_language[lang]}.",
+            },
         ],
         max_tokens=100,
         seed=random.randint(0, 1000000),
@@ -49,24 +73,31 @@ Example: I'm nervous about the interview tomorrow
     return msg
 
 
-model = OrpheusCpp()
-
-
 class OrpheusStream(AsyncStreamHandler):
     def __init__(self):
         super().__init__(output_sample_rate=24_000, output_frame_size=480)
         self.latest_msg = ""
         self.latest_voice_id = "tara"
         self.audio_queue: asyncio.Queue[AudioEmitType] = asyncio.Queue()
+        self.trigger_event = asyncio.Event()
 
     async def start_up(self):
         await self.wait_for_args()
 
     async def receive(self, frame: tuple[int, npt.NDArray[np.int16]]) -> None:
-        msg, cb, voice_id, _ = self.latest_args[1:]
-        if msg != self.latest_msg or voice_id != self.latest_voice_id:
+        msg, cb, lang, voice_id, _ = self.latest_args[1:]
+        if (
+            msg != self.latest_msg
+            or voice_id != self.latest_voice_id
+            or self.trigger_event.is_set()
+        ):
             await self.send_message(create_message("log", "pause_detected"))
-
+            if language_to_model[lang] is None:
+                await self.send_message(
+                    json.dumps({"type": "warning", "message": "loading_model"})
+                )
+                language_to_model[lang] = OrpheusCpp(lang=lang)
+            model = language_to_model[lang]
             # Initialize variables
             all_audio = np.array([], dtype=np.int16)
             started_playback = False
@@ -90,6 +121,7 @@ class OrpheusStream(AsyncStreamHandler):
             await self.audio_queue.put(AdditionalOutputs(cb))
             self.latest_msg = msg
             self.latest_voice_id = voice_id
+            self.trigger_event.clear()
 
     async def emit(self) -> AudioEmitType:
         return await wait_for_item(self.audio_queue)
@@ -116,8 +148,33 @@ chat = gr.Chatbot(
 generate = gr.Button(
     value="Generate Prompt",
 )
-AVAILABLE_VOICES = ["tara", "leah", "jess", "leo", "dan", "mia", "zac", "zoe"]
+
+language_to_voice = {
+    "en": ["tara", "jess", "leah", "leo", "dan", "mia", "zac", "zoe"],
+    "es": ["javi", "sergio", "maria"],
+    "fr": ["pierre", "amelie", "marie"],
+    "de": ["jana", "thomas", "max"],
+    "it": ["pietro", "giulia", "carlo"],
+    "zh": ["长乐", "白芷"],
+    "ko": ["유나", "준서"],
+    "hi": ["ऋतिका"],
+}
+
+language_to_model = {}
+
 prompt = gr.Textbox(label="Prompt", value="Hello, how are you?")
+available_languages = ["en", "fr", "es", "de", "it", "zh", "ko", "hi"]
+for lang in available_languages:
+    language_to_model[lang] = None
+language_to_model["en"] = OrpheusCpp(lang="en")
+
+language_dropdown = gr.Dropdown(
+    choices=available_languages, value="en", label="Language"
+)
+voice_dropdown = gr.Dropdown(
+    choices=language_to_voice["en"], value="tara", label="Voice"
+)
+
 stream = Stream(
     OrpheusStream(),
     modality="audio",
@@ -125,7 +182,8 @@ stream = Stream(
     additional_inputs=[
         prompt,
         chat,
-        gr.Dropdown(choices=AVAILABLE_VOICES, value="tara", label="Voice"),
+        language_dropdown,
+        voice_dropdown,
         generate,
     ],
     additional_outputs=[chat],
@@ -136,8 +194,26 @@ stream = Stream(
         "send_input_on": "submit",
     },
 )
+
+
+def trigger_event(webrtc_id: str):
+    stream.webrtc_component.handlers[webrtc_id].trigger_event.set()  # type: ignore
+
+
 with stream.ui:
-    generate.click(generate_message, inputs=[], outputs=[prompt])
+    prompt.submit(
+        trigger_event,  # type: ignore
+        inputs=[stream.webrtc_component],
+        outputs=None,
+    )
+    generate.click(generate_message, inputs=[language_dropdown], outputs=[prompt])
+    language_dropdown.change(
+        lambda lang: gr.Dropdown(
+            choices=language_to_voice[lang], value=language_to_voice[lang][0]
+        ),
+        inputs=[language_dropdown],
+        outputs=[voice_dropdown],
+    )
 
 
 stream.ui.launch()
