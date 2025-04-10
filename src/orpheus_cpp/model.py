@@ -40,7 +40,24 @@ CUSTOM_TOKEN_PREFIX = "<custom_token_"
 
 
 class OrpheusCpp:
-    def __init__(self, n_gpu_layers: int = 0, n_threads: int = 0, verbose: bool = True):
+    lang_to_model = {
+        "en": "isaiahbjork/orpheus-3b-0.1-ft-Q4_K_M-GGUF",
+        "es": "freddyaboulton/3b-es_it-ft-research_release-Q4_K_M-GGUF",
+        "fr": "freddyaboulton/3b-fr-ft-research_release-Q4_K_M-GGUF",
+        "de": "freddyaboulton/3b-de-ft-research_release-Q4_K_M-GGUF",
+        "it": "freddyaboulton/3b-es_it-ft-research_release-Q4_K_M-GGUF",
+        "hi": "freddyaboulton/3b-hi-ft-research_release-Q4_K_M-GGUF",
+        "zh": "freddyaboulton/3b-zh-ft-research_release-Q4_K_M-GGUF",
+        "ko": "freddyaboulton/3b-ko-ft-research_release-Q4_K_M-GGUF",
+    }
+
+    def __init__(
+        self,
+        n_gpu_layers: int = 0,
+        n_threads: int = 0,
+        verbose: bool = True,
+        lang: Literal["en", "es", "ko", "fr"] = "es",
+    ):
         import importlib.util
 
         if importlib.util.find_spec("llama_cpp") is None:
@@ -66,10 +83,10 @@ class OrpheusCpp:
             raise ImportError(
                 f"llama_cpp is not installed. Please install it using `pip install llama-cpp-python {extra_index_url}`."
             )
-
+        repo_id = self.lang_to_model[lang]
         model_file = hf_hub_download(
-            repo_id="isaiahbjork/orpheus-3b-0.1-ft-Q4_K_M-GGUF",
-            filename="orpheus-3b-0.1-ft-q4_k_m.gguf",
+            repo_id=repo_id,
+            filename=repo_id.split("/")[-1].lower().replace("-gguf", ".gguf"),
         )
         from llama_cpp import Llama
 
@@ -84,6 +101,7 @@ class OrpheusCpp:
             verbose=verbose,
             n_gpu_layers=n_gpu_layers,
             n_threads=n_threads,
+            batch_size=1,
         )
 
         repo_id = "onnx-community/snac_24khz-ONNX"
