@@ -36,7 +36,7 @@ class TTSOptions(TypedDict):
     """The voice to use for the TTS. Default: "tara"."""
 
 
-CUSTOM_TOKEN_PREFIX = "<custom_token_>"
+CUSTOM_TOKEN_PREFIX = "<custom_token_"
 
 
 class OrpheusCpp:
