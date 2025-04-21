@@ -49,6 +49,7 @@ class OrpheusCpp:
         "hi": "freddyaboulton/3b-hi-ft-research_release-Q4_K_M-GGUF",
         "zh": "freddyaboulton/3b-zh-ft-research_release-Q4_K_M-GGUF",
         "ko": "freddyaboulton/3b-ko-ft-research_release-Q4_K_M-GGUF",
+        "ur": "m-aliabbas1/urdu_tts_orp"
     }
 
     def __init__(
@@ -56,8 +57,11 @@ class OrpheusCpp:
         n_gpu_layers: int = 0,
         n_threads: int = 0,
         verbose: bool = True,
-        lang: Literal["en", "es", "ko", "fr"] = "es",
+        lang: Literal["en", "es", "ko", "fr","ur"] = "ur",
     ):
+        print('='*50)
+        print(f'Loading Urdu Model, {self.lang_to_model[lang]}')
+        print('='*50)
         import importlib.util
 
         if importlib.util.find_spec("llama_cpp") is None:
