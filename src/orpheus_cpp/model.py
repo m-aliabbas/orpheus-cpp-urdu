@@ -88,9 +88,11 @@ class OrpheusCpp:
                 f"llama_cpp is not installed. Please install it using `pip install llama-cpp-python {extra_index_url}`."
             )
         repo_id = self.lang_to_model[lang]
+        print("Repo ID",repo_id)
         model_file = hf_hub_download(
             repo_id=repo_id,
-            filename=repo_id.split("/")[-1].lower().replace("-gguf", ".gguf"),
+            # filename=repo_id.split("/")[-1].lower().replace("-gguf", ".gguf"),
+            filename="urdu_model.gguf"
         )
         from llama_cpp import Llama
 
