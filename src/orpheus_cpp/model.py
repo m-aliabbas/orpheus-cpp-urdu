@@ -54,7 +54,7 @@ class OrpheusCpp:
 
     def __init__(
         self,
-        n_gpu_layers: int = 18,
+        n_gpu_layers: int = 60,
         n_threads: int = 0,
         verbose: bool = True,
         lang: Literal["en", "es", "ko", "fr","ur"] = "ur",
