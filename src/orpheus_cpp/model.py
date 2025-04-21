@@ -92,7 +92,7 @@ class OrpheusCpp:
         model_file = hf_hub_download(
             repo_id=repo_id,
             # filename=repo_id.split("/")[-1].lower().replace("-gguf", ".gguf"),
-            filename="urdu_model.gguf"
+            filename = 'urdu_female-q4_k_m.gguf'
         )
         from llama_cpp import Llama
 
